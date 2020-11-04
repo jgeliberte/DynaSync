@@ -1,0 +1,9 @@
+[CLOUD_CREDENTIALS]
+host = dynaslope.phivolcs.dost.gov.ph
+user = cbewsl
+password = cb3wsls3rv3r
+
+[RPI_CREDENTIALS]
+host = localhost
+user = root
+password = senslope
