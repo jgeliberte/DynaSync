@@ -6,13 +6,16 @@ from datetime import datetime as dt
 import argparse
 from pprint import pprint
 import traceback
+import threading
+import dbmanager as db
+import threader as th
 
 class Args:
     def get_args(self):
         parser = argparse.ArgumentParser(
             description="Database Syncer for CBEWS-L Softwares [-options]")
         parser.add_argument("-s", "--server",
-                            help="smsinbox table (loggers or users)")
+                            help="Deployed server")
         try:
             args = parser.parse_args()
             return args
@@ -22,24 +25,19 @@ class Args:
             print(error)
             sys.exit()
 
-class Threader:
-
-    def __init__(self):
-        print("initialize script")
-
 class Syncer:
-
     def __init__(self):
         print("Syncer")
 
-class DBManager:
-    def __init__(self):
-        print("Database Manager")
-
 if __name__ == "__main__":
-
+    config = configparser.ConfigParser()
+    config.read('config/config.cnf')
     init = Args()
-    thread = Threader()
-    syncer = Syncer()
-    dbmanager = DBManager()
-    print("Script Args:", init.get_args())
+    deployed_server = init.get_args()
+    # thread = Threader(config['SYNC_CONFIG']['THREAD_COUNT'])
+    # syncer = Syncer()
+    dbmanager = db.DBManager(deployed_server.server)
+    db_tables = dbmanager.getTables()
+    for database in db_tables:
+        status = dbmanager.checkTriggers(database, db_tables[database])
+    # print("Script Args:", init.get_args())
