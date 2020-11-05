@@ -1,6 +1,7 @@
 import MySQLdb
 import configparser
 import json
+import sys
 
 class DatabaseCredentials():
 	def __new__(self):
@@ -41,10 +42,48 @@ class DBManager:
 		return table_dict
 
 	def checkTriggers(self, database, tables):
-		print(">> Checking triggers")
+		print(">> Checking triggers for database:", database)
+		try:
+			for table in tables:
+				temp_triggers = {}
+				db, cur = self.db_connect(database)
+				query = f"show triggers FROM {database} like '{table}';"
+				res = cur.execute(query)
+				out = cur.fetchall()
+				if res:
+					for row in out:
+						temp_triggers[row[0]] = row
+				db.close()
+				self.insertTriggers(temp_triggers, database, table)
+		except MySQLdb.OperationalError as err:
+			print(">> Error:", err)
 
-	def insertTriggers(self):
-		print("<< Inserting triggers")
+	def insertTriggers(self, data, database, table):
+		trigger = [f'DATA_SYNC_{table}_AFTER_INSERT', f'DATA_SYNC_{table}_AFTER_UPDATE', f'DATA_SYNC_{table}_AFTER_DELETE']
+		for t in trigger:
+			if t in data:
+				print(f"Trigger {t} already exists... Skipping...")
+			else:
+				print(f"<< Inserting triggers: {t}")
+				if "AFTER_INSERT" in t:
+					query = f"CREATE DEFINER = CURRENT_USER TRIGGER `{database}`.`{t}` " \
+					f"AFTER INSERT ON `{table}` FOR EACH ROW BEGIN " \
+					f"INSERT INTO history_collections.history VALUES (0, new.id, 'INSERT', '{table}', '{database}', True, False);END"
+				elif "AFTER_UPDATE" in t:
+					query = f"CREATE DEFINER = CURRENT_USER TRIGGER `{database}`.`{t}` " \
+					f"AFTER UPDATE ON `{table}` FOR EACH ROW BEGIN " \
+					f"INSERT INTO history_collections.history VALUES (0, new.id, 'UPDATE', '{table}', '{database}', True, False);END"
+				elif "AFTER_DELETE" in t:
+					query = f"CREATE DEFINER = CURRENT_USER TRIGGER `{database}`.`{t}` " \
+					f"AFTER DELETE ON `{table}` FOR EACH ROW BEGIN " \
+					f"INSERT INTO history_collections.history VALUES (0, old.id, 'DELETE', '{table}', '{database}', True, False);END"
+				else:
+					print("** Invalid key... Skipping...")
+					return -1
+				db, cur = self.db_connect(database)
+				res = cur.execute(query)
+				print("RESULT:", res)
+				db.close()
 
 	def fetchHistory(self):
 		print(">> Fetching database history")

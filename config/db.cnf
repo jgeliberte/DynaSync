@@ -11,4 +11,4 @@ password = senslope
 default_schema = cbewsl_commons_db
 
 [DB_SCHEMAS]
-schemas = cbewsl_commons_db, cbewsl_mar_collections, cbewsl_umi_collections, senslopedb
+schemas = cbewsl_commons_db, cbewsl_mar_collections, cbewsl_umi_collections 
