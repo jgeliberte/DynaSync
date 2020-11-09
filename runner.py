@@ -32,11 +32,12 @@ class Syncer:
             for log in logs:
                 data = logs[log]
                 history_data = dbmanager.fetchHistoryReferenceData(log, data)
+                if data[2] == "DELETE":
+                    history_data = data[1]
                 sync_status = dbmanager.applyHistoryChanges(history_data, data[4], data[3], data[2])
                 if (sync_status == True):
                     dbmanager.confirmSyncing(data[0], deployed_server)
-                sys.exit(0)
-
+            time.sleep(5)
 
 if __name__ == "__main__":
     config = configparser.ConfigParser()

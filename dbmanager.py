@@ -130,7 +130,6 @@ class DBManager:
         except MySQLdb.OperationalError as err:
             print(">> Error:", err)
 
-
     def applyHistoryChanges(self, data, schema, table, command):
         print("<< Applying changes")
         status = None
@@ -185,11 +184,27 @@ class DBManager:
                 db.close()
                 return ret_val
         elif command == "DELETE":
-            print("DELETE DATA")
+            ret_val = False
+            try:
+                query = f"DELETE FROM {table} WHERE id = {data}"
+                if self.deployed_server == "pi":
+                    db, cur = self.ops_db_connect(schema)
+                else:
+                    db, cur = self.db_connect(schema)
+                execute = cur.execute(query)
+                db.commit()
+                if execute == 0:
+                    ret_val = True
+            except MySQLdb.OperationalError as err:
+                print(">> Error:", err)
+            finally:
+                db.close()
+                return ret_val
         else:
             print("INVALID")
 
     def crossCheckData(self, data, schema):
+        print("TODO:")
         print(data)
         print(schema)
 
